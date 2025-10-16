@@ -2,17 +2,14 @@ const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/clien
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 require('dotenv').config();
 
+// Let the SDK automatically find credentials from environment variables
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-  }
 });
 
 const BUCKET_NAME = process.env.S3_BUCKET_NAME || 'dnate-practice-recordings';
 
-// Generate pre-signed URL for uploading
+// ... (rest of the file remains the same)
 async function generateUploadUrl(sessionId, fileType = 'video/webm') {
   const key = `recordings/${sessionId}/${Date.now()}.webm`;
   
@@ -34,7 +31,6 @@ async function generateUploadUrl(sessionId, fileType = 'video/webm') {
   };
 }
 
-// Generate pre-signed URL for downloading
 async function generateDownloadUrl(key) {
   const command = new GetObjectCommand({
     Bucket: BUCKET_NAME,

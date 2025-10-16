@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { docClient, TABLES } = require('../config/dynamodb');
+const { PutCommand, QueryCommand, GetCommand } = require('@aws-sdk/lib-dynamodb');
 
 exports.register = async (req, res) => {
   try {
@@ -14,12 +15,12 @@ exports.register = async (req, res) => {
       });
     }
 
-    const existingUser = await docClient.query({
+    const existingUser = await docClient.send(new QueryCommand({
       TableName: TABLES.USERS,
       IndexName: 'EmailIndex',
       KeyConditionExpression: 'email = :email',
       ExpressionAttributeValues: { ':email': email }
-    }).promise();
+    }));
 
     if (existingUser.Items.length > 0) {
       return res.status(409).json({ 
@@ -40,10 +41,10 @@ exports.register = async (req, res) => {
       totalSessions: 0
     };
 
-    await docClient.put({
+    await docClient.send(new PutCommand({
       TableName: TABLES.USERS,
       Item: user
-    }).promise();
+    }));
 
     const token = jwt.sign(
       { userId, email },
@@ -77,12 +78,12 @@ exports.login = async (req, res) => {
       });
     }
 
-    const result = await docClient.query({
+    const result = await docClient.send(new QueryCommand({
       TableName: TABLES.USERS,
       IndexName: 'EmailIndex',
       KeyConditionExpression: 'email = :email',
       ExpressionAttributeValues: { ':email': email }
-    }).promise();
+    }));
 
     if (result.Items.length === 0) {
       return res.status(401).json({ 
@@ -128,10 +129,10 @@ exports.login = async (req, res) => {
 
 exports.me = async (req, res) => {
   try {
-    const result = await docClient.get({
+    const result = await docClient.send(new GetCommand({
       TableName: TABLES.USERS,
       Key: { userId: req.user.userId }
-    }).promise();
+    }));
 
     if (!result.Item) {
       return res.status(404).json({ 

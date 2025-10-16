@@ -2,6 +2,8 @@ const { generateUploadUrl, generateDownloadUrl } = require('../config/s3');
 const { docClient, TABLES } = require('../config/dynamodb');
 const { transcribeRecording } = require('../services/transcriptionService');
 const { analyzeAnswer } = require('../services/analysisService');
+const { GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+
 
 // Get pre-signed URL for uploading
 exports.getUploadUrl = async (req, res) => {
@@ -10,10 +12,10 @@ exports.getUploadUrl = async (req, res) => {
     const { fileType } = req.body;
     const userId = req.user.userId;
 
-    const sessionResult = await docClient.get({
+    const sessionResult = await docClient.send(new GetCommand({
       TableName: TABLES.SESSIONS,
       Key: { sessionId }
-    }).promise();
+    }));
 
     if (!sessionResult.Item) {
       return res.status(404).json({
@@ -58,10 +60,10 @@ exports.processRecording = async (req, res) => {
 
     console.log('Processing recording:', s3Key);
 
-    const sessionResult = await docClient.get({
+    const sessionResult = await docClient.send(new GetCommand({
       TableName: TABLES.SESSIONS,
       Key: { sessionId }
-    }).promise();
+    }));
 
     if (!sessionResult.Item) {
       return res.status(404).json({
@@ -80,10 +82,10 @@ exports.processRecording = async (req, res) => {
     }
 
     const question = session.questions[questionIndex];
-    const personaResult = await docClient.get({
+    const personaResult = await docClient.send(new GetCommand({
       TableName: TABLES.PERSONAS,
       Key: { personaId: session.personaId }
-    }).promise();
+    }));
     const persona = personaResult.Item;
 
     console.log('Step 1: Transcribing...');
@@ -108,14 +110,14 @@ exports.processRecording = async (req, res) => {
       uploadedAt: Date.now()
     });
 
-    await docClient.update({
+    await docClient.send(new UpdateCommand({
       TableName: TABLES.SESSIONS,
       Key: { sessionId },
       UpdateExpression: 'SET recordings = :recordings',
       ExpressionAttributeValues: {
         ':recordings': recordings
       }
-    }).promise();
+    }));
 
     res.json({
       success: true,
@@ -139,10 +141,10 @@ exports.getRecording = async (req, res) => {
     const { sessionId, recordingIndex } = req.params;
     const userId = req.user.userId;
 
-    const sessionResult = await docClient.get({
+    const sessionResult = await docClient.send(new GetCommand({
       TableName: TABLES.SESSIONS,
       Key: { sessionId }
-    }).promise();
+    }));
 
     if (!sessionResult.Item) {
       return res.status(404).json({
@@ -194,10 +196,10 @@ exports.getSessionRecordings = async (req, res) => {
     const { sessionId } = req.params;
     const userId = req.user.userId;
 
-    const sessionResult = await docClient.get({
+    const sessionResult = await docClient.send(new GetCommand({
       TableName: TABLES.SESSIONS,
       Key: { sessionId }
-    }).promise();
+    }));
 
     if (!sessionResult.Item) {
       return res.status(404).json({

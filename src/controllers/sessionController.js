@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const { docClient, TABLES } = require('../config/dynamodb');
 const { generateQuestions } = require('../config/ai');
+const { GetCommand, PutCommand, UpdateCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb');
 
 exports.startSession = async (req, res) => {
   try {
@@ -14,10 +15,10 @@ exports.startSession = async (req, res) => {
       });
     }
 
-    const personaResult = await docClient.get({
+    const personaResult = await docClient.send(new GetCommand({
       TableName: TABLES.PERSONAS,
       Key: { personaId }
-    }).promise();
+    }));
 
     if (!personaResult.Item) {
       return res.status(404).json({ 
@@ -47,10 +48,10 @@ exports.startSession = async (req, res) => {
       createdAt: Date.now()
     };
 
-    await docClient.put({
+    await docClient.send(new PutCommand({
       TableName: TABLES.SESSIONS,
       Item: session
-    }).promise();
+    }));
 
     res.status(201).json({
       success: true,
@@ -78,10 +79,10 @@ exports.submitAnswer = async (req, res) => {
     const { questionIndex, answer, timeTaken, confidence } = req.body;
     const userId = req.user.userId;
 
-    const sessionResult = await docClient.get({
+    const sessionResult = await docClient.send(new GetCommand({
       TableName: TABLES.SESSIONS,
       Key: { sessionId }
-    }).promise();
+    }));
 
     if (!sessionResult.Item) {
       return res.status(404).json({ 
@@ -108,7 +109,7 @@ exports.submitAnswer = async (req, res) => {
       submittedAt: Date.now()
     });
 
-    await docClient.update({
+    await docClient.send(new UpdateCommand({
       TableName: TABLES.SESSIONS,
       Key: { sessionId },
       UpdateExpression: 'SET answers = :answers, currentQuestionIndex = :nextIndex',
@@ -116,7 +117,7 @@ exports.submitAnswer = async (req, res) => {
         ':answers': answers,
         ':nextIndex': questionIndex + 1
       }
-    }).promise();
+    }));
 
     res.json({
       success: true,
@@ -137,10 +138,10 @@ exports.completeSession = async (req, res) => {
     const { sessionId } = req.params;
     const userId = req.user.userId;
 
-    const sessionResult = await docClient.get({
+    const sessionResult = await docClient.send(new GetCommand({
       TableName: TABLES.SESSIONS,
       Key: { sessionId }
-    }).promise();
+    }));
 
     if (!sessionResult.Item) {
       return res.status(404).json({ 
@@ -163,7 +164,7 @@ exports.completeSession = async (req, res) => {
       ? session.answers.reduce((sum, a) => sum + (a.confidence || 0), 0) / session.answers.length
       : 0;
 
-    await docClient.update({
+    await docClient.send(new UpdateCommand({
       TableName: TABLES.SESSIONS,
       Key: { sessionId },
       UpdateExpression: 'SET #status = :status, completedAt = :completedAt',
@@ -172,7 +173,7 @@ exports.completeSession = async (req, res) => {
         ':status': 'completed',
         ':completedAt': Date.now()
       }
-    }).promise();
+    }));
 
     res.json({
       success: true,
@@ -196,13 +197,13 @@ exports.getUserSessions = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const result = await docClient.query({
+    const result = await docClient.send(new QueryCommand({
       TableName: TABLES.SESSIONS,
       IndexName: 'UserSessionsIndex',
       KeyConditionExpression: 'userId = :userId',
       ExpressionAttributeValues: { ':userId': userId },
       ScanIndexForward: false
-    }).promise();
+    }));
 
     res.json({
       success: true,
@@ -223,10 +224,10 @@ exports.getSessionById = async (req, res) => {
     const { sessionId } = req.params;
     const userId = req.user.userId;
 
-    const result = await docClient.get({
+    const result = await docClient.send(new GetCommand({
       TableName: TABLES.SESSIONS,
       Key: { sessionId }
-    }).promise();
+    }));
 
     if (!result.Item) {
       return res.status(404).json({ 

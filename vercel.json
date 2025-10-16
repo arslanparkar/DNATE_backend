@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "minimal-server.js",
+      "src": "src/server.js",
       "use": "@vercel/node"
     }
   ],
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "minimal-server.js"
+      "destination": "src/server.js"
     }
   ]
 }

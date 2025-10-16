@@ -1,54 +1,50 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
+console.log('--- Serverless Function Starting ---');
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+try {
+  console.log('Step 1: Requiring modules...');
+  const express = require('express');
+  const cors = require('cors');
+  require('dotenv').config();
+  console.log('Step 1: Modules required successfully.');
 
-// --- START of Updated Code ---
+  console.log('Step 2: Initializing Express app...');
+  const app = express();
+  const PORT = process.env.PORT || 5000;
+  console.log('Step 2: Express app initialized.');
 
-// CORS configuration
-const corsOptions = {
-  origin: 'https://dnatefrontend.vercel.app',
-  optionsSuccessStatus: 200 // For legacy browser support
-};
+  console.log('Step 3: Configuring CORS...');
+  const corsOptions = {
+    origin: 'https://dnatefrontend.vercel.app',
+    optionsSuccessStatus: 200
+  };
+  app.use(cors(corsOptions));
+  console.log('Step 3: CORS configured.');
 
-// Middleware - ORDER MATTERS!
-app.use(cors(corsOptions));
-// --- END of Updated Code ---
+  console.log('Step 4: Configuring middleware...');
+  app.use(express.json());
+  console.log('Step 4: Middleware configured.');
 
-app.use(express.json());
+  console.log('Step 5: Loading routes...');
+  const routes = require('./routes');
+  app.use('/api', routes);
+  console.log('Step 5: Routes loaded successfully.');
 
-
-// Simple test route FIRST
-app.get('/test', (req, res) => {
-  res.json({ message: 'Test works!' });
-});
-
-// Load routes
-const routes = require('./routes');
-app.use('/api', routes);
-
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({
-    message: '🚀 DNATE Question Bot API',
-    version: '1.0.0',
-    status: 'running'
+  // Root endpoint
+  app.get('/', (req, res) => {
+    res.json({
+      message: '🚀 DNATE Question Bot API',
+      version: '1.0.0',
+      status: 'running'
+    });
   });
-});
 
-// Start server only if not in a serverless environment
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`
-╔════════════════════════════════════╗
-║   🚀 DNATE QUESTION BOT API       ║
-║   Port: ${PORT}                      ║
-╚════════════════════════════════════╝
-    `);
-    console.log(`\n✅ Server: http://localhost:${PORT}\n`);
-  });
+  console.log('Step 6: Exporting app...');
+  module.exports = app;
+  console.log('--- Serverless Function Initialized Successfully ---');
+
+} catch (error) {
+  console.error('--- CRITICAL STARTUP ERROR ---');
+  console.error(error);
+  // Ensure the process exits on a critical error during init
+  process.exit(1);
 }
-
-module.exports = app;

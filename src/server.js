@@ -5,9 +5,20 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// --- START of Updated Code ---
+
+// CORS configuration
+const corsOptions = {
+  origin: 'https://dnatefrontend.vercel.app',
+  optionsSuccessStatus: 200 // For legacy browser support
+};
+
 // Middleware - ORDER MATTERS!
-app.use(cors());
+app.use(cors(corsOptions));
+// --- END of Updated Code ---
+
 app.use(express.json());
+
 
 // Simple test route FIRST
 app.get('/test', (req, res) => {
@@ -28,13 +39,13 @@ app.get('/', (req, res) => {
 });
 
 // Start server only if not in a serverless environment
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
     console.log(`
-  ╔════════════════════════════════════╗
-  ║   🚀 DNATE QUESTION BOT API       ║
-  ║   Port: ${PORT}                      ║
-  ╚════════════════════════════════════╝
+╔════════════════════════════════════╗
+║   🚀 DNATE QUESTION BOT API       ║
+║   Port: ${PORT}                      ║
+╚════════════════════════════════════╝
     `);
     console.log(`\n✅ Server: http://localhost:${PORT}\n`);
   });

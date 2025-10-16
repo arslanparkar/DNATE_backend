@@ -27,13 +27,17 @@ app.get('/', (req, res) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`
-╔════════════════════════════════════╗
-║   🚀 DNATE QUESTION BOT API       ║
-║   Port: ${PORT}                      ║
-╚════════════════════════════════════╝
-  `);
-  console.log(`\n✅ Server: http://localhost:${PORT}\n`);
-});
+// Start server only if not in a serverless environment
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`
+  ╔════════════════════════════════════╗
+  ║   🚀 DNATE QUESTION BOT API       ║
+  ║   Port: ${PORT}                      ║
+  ╚════════════════════════════════════╝
+    `);
+    console.log(`\n✅ Server: http://localhost:${PORT}\n`);
+  });
+}
+
+module.exports = app;

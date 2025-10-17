@@ -27,6 +27,9 @@ console.log('[LOG] Loading controllers/recordingController...');
 const recordingController = require('../controllers/recordingController');
 console.log('[LOG] Loaded controllers/recordingController.');
 
+// --- ADD THIS LINE ---
+const questionController = require('../controllers/questionController');
+
 router.get('/health', async (req, res) => {
   try {
     const dbConnected = await testConnection();
@@ -45,6 +48,17 @@ router.post('/auth/login', authController.login);
 router.get('/auth/me', authenticateToken, authController.me);
 router.get('/personas', authenticateToken, personaController.getAllPersonas);
 router.get('/personas/:id', authenticateToken, personaController.getPersonaById);
+
+// --- ADD THESE LINES ---
+router.get('/questions', authenticateToken, questionController.getAllQuestions);
+router.get('/questions/filter', authenticateToken, questionController.filterQuestions);
+router.get('/questions/categories', authenticateToken, questionController.getCategories);
+router.get('/questions/category/:category', authenticateToken, questionController.getQuestionsByCategory);
+router.get('/questions/persona/:personaId', authenticateToken, questionController.getQuestionsByPersona);
+router.get('/questions/difficulty/:difficulty', authenticateToken, questionController.getQuestionsByDifficulty);
+router.get('/questions/:id', authenticateToken, questionController.getQuestionById);
+// ----------------------
+
 router.post('/sessions/start', authenticateToken, sessionController.startSession);
 router.post('/sessions/:sessionId/answer', authenticateToken, sessionController.submitAnswer);
 router.post('/sessions/:sessionId/complete', authenticateToken, sessionController.completeSession);

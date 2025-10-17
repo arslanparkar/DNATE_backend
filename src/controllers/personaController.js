@@ -1,9 +1,9 @@
 const { docClient, TABLES } = require('../config/dynamodb');
-const { ScanCommand, GetCommand } = require('@aws-sdk/lib-dynamodb'); // Correctly import commands
+const { ScanCommand, GetCommand } = require('@aws-sdk/lib-dynamodb'); // Import commands
 
 exports.getAllPersonas = async (req, res) => {
   try {
-    // Use the new docClient.send() syntax
+    // Corrected to use the AWS SDK v3 'send' command
     const result = await docClient.send(new ScanCommand({
       TableName: TABLES.PERSONAS
     }));
@@ -13,7 +13,8 @@ exports.getAllPersonas = async (req, res) => {
       count: result.Items.length,
       personas: result.Items
     });
-  } catch (error) {
+  } catch (error)
+ {
     console.error('Get personas error:', error);
     res.status(500).json({ 
       success: false,
@@ -26,7 +27,7 @@ exports.getPersonaById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Use the new docClient.send() syntax
+    // Corrected to use the AWS SDK v3 'send' command
     const result = await docClient.send(new GetCommand({
       TableName: TABLES.PERSONAS,
       Key: { personaId: id }

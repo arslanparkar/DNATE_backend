@@ -2,17 +2,15 @@ const { v4: uuidv4 } = require('uuid');
 const { docClient, TABLES } = require('../config/dynamodb');
 const { generateQuestions } = require('../config/ai');
 const { GetCommand, PutCommand, UpdateCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb');
+const fallbackQuestions = require('../data/questions.json').questions;
 
 exports.startSession = async (req, res) => {
   try {
-    const { personaId, difficulty, questionCount } = req.body;
+    const { personaId, difficulty = 'medium', questionCount = 5 } = req.body;
     const userId = req.user.userId;
 
     if (!personaId) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'Persona ID required' 
-      });
+      return res.status(400).json({ success: false, error: 'Persona ID required' });
     }
 
     const personaResult = await docClient.send(new GetCommand({
@@ -21,16 +19,12 @@ exports.startSession = async (req, res) => {
     }));
 
     if (!personaResult.Item) {
-      return res.status(404).json({ 
-        success: false,
-        error: 'Persona not found' 
-      });
+      return res.status(404).json({ success: false, error: 'Persona not found' });
     }
 
     const persona = personaResult.Item;
     let questions;
 
-    // --- START OF THE FIX ---
     try {
       console.log('Attempting to generate questions from AI...');
       questions = await generateQuestions(persona, difficulty, questionCount);
@@ -39,10 +33,10 @@ exports.startSession = async (req, res) => {
       console.warn('AI question generation failed:', aiError.message);
       console.log('Using fallback questions instead.');
       
-      // Shuffle the fallback questions and select the requested number
       const shuffled = [...fallbackQuestions].sort(() => 0.5 - Math.random());
+      // Correctly map the "question" field to "text"
       questions = shuffled.slice(0, questionCount).map(q => ({
-          question: q.question,
+          text: q.question,
           category: q.category,
           difficulty: q.difficulty,
           timeLimit: q.estimated_response_time || 90
@@ -55,7 +49,7 @@ exports.startSession = async (req, res) => {
       userId,
       personaId,
       personaName: persona.name,
-      difficulty: difficulty || 'medium',
+      difficulty,
       questions,
       currentQuestionIndex: 0,
       answers: [],
@@ -88,6 +82,7 @@ exports.startSession = async (req, res) => {
   }
 };
 
+// ... (rest of the file remains unchanged)
 exports.submitAnswer = async (req, res) => {
   try {
     const { sessionId } = req.params;

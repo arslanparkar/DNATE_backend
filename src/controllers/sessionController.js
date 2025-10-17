@@ -28,11 +28,26 @@ exports.startSession = async (req, res) => {
     }
 
     const persona = personaResult.Item;
-    const questions = await generateQuestions(
-      persona, 
-      difficulty || 'medium', 
-      questionCount || 5
-    );
+    let questions;
+
+    // --- START OF THE FIX ---
+    try {
+      console.log('Attempting to generate questions from AI...');
+      questions = await generateQuestions(persona, difficulty, questionCount);
+      console.log('Successfully generated questions from AI.');
+    } catch (aiError) {
+      console.warn('AI question generation failed:', aiError.message);
+      console.log('Using fallback questions instead.');
+      
+      // Shuffle the fallback questions and select the requested number
+      const shuffled = [...fallbackQuestions].sort(() => 0.5 - Math.random());
+      questions = shuffled.slice(0, questionCount).map(q => ({
+          question: q.question,
+          category: q.category,
+          difficulty: q.difficulty,
+          timeLimit: q.estimated_response_time || 90
+      }));
+    }
 
     const sessionId = uuidv4();
     const session = {

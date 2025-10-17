@@ -1,8 +1,9 @@
 const { docClient, TABLES } = require('../config/dynamodb');
-const { ScanCommand, GetCommand } = require('@aws-sdk/lib-dynamodb'); // Import commands
+const { ScanCommand, GetCommand } = require('@aws-sdk/lib-dynamodb'); // Correctly import commands
 
 exports.getAllPersonas = async (req, res) => {
   try {
+    // Use the new docClient.send() syntax
     const result = await docClient.send(new ScanCommand({
       TableName: TABLES.PERSONAS
     }));
@@ -14,9 +15,9 @@ exports.getAllPersonas = async (req, res) => {
     });
   } catch (error) {
     console.error('Get personas error:', error);
-    res.status(500).json({
+    res.status(500).json({ 
       success: false,
-      error: 'Failed to fetch personas'
+      error: 'Failed to fetch personas' 
     });
   }
 };
@@ -25,15 +26,16 @@ exports.getPersonaById = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Use the new docClient.send() syntax
     const result = await docClient.send(new GetCommand({
       TableName: TABLES.PERSONAS,
       Key: { personaId: id }
     }));
 
     if (!result.Item) {
-      return res.status(404).json({
+      return res.status(404).json({ 
         success: false,
-        error: 'Persona not found'
+        error: 'Persona not found' 
       });
     }
 
@@ -43,9 +45,9 @@ exports.getPersonaById = async (req, res) => {
     });
   } catch (error) {
     console.error('Get persona error:', error);
-    res.status(500).json({
+    res.status(500).json({ 
       success: false,
-      error: 'Failed to fetch persona'
+      error: 'Failed to fetch persona' 
     });
   }
 };
